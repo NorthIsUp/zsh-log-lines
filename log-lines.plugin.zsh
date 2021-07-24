@@ -6,4 +6,5 @@
 fpath+=( "${0:h}/functions" )
 path+=( "${0:h}/bin" )
 
-autoload functions/*
+local to_load=(functions/*)
+autoload ${to_load#functions/*}
