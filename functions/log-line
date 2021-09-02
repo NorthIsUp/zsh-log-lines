@@ -1,53 +1,55 @@
 #!/usr/bin/env zsh
 # Disable xtrace as it would mangle the output.
-setopt localoptions noxtrace
+setopt \
+  LOCALOPTIONS \
+  NO_XTRACE \
+  ERR_RETURN \
+  NO_UNSET \
+  PIPE_FAIL
 
-zparseopts -D -E -- \
-    -fd:=fdn u:=fdn \
-    -bold=message_bold \
-    -color:=message_color -auto-color:=auto_color \
-    -no-arrow=no_arrow \
-    -arrow:=arrow -arrow-bold=arrow_bold -arrow-color:=arrow_color \
-    -decor:=decor -decor-bold=decor_bold -decor-color:=decor_color \
-    -label:=label -label-bold=label_bold -label-color:=label_color \
-    -interlog:=interlog \
-    -label-justify:=label_justify \
-    -icon:=icon \
-    -nl=number_lines -number-lines=number_lines \
-    -file:=file
+zparseopts -A opts -D -E -- \
+    -fd: u: \
+    -bold \
+    -color: -auto-color: \
+    -no-arrow \
+    -arrow: -arrow-bold -arrow-color: \
+    -decor: -decor-bold -decor-color: \
+    -label: -label-bold -label-color: \
+    -interlog: \
+    -label-justify: \
+    -icon: \
+    -nl -number-lines \
+    -file:
 
-
-# [[ ${arrow_bold} ]] && arrow_bold='%B'
-# [[ ${decor_bold} ]] && decor_bold='%B'
-# [[ ${message_bold} ]] && message_bold='%B'
-
-[[ $icon ]] && icon="${icon[2]}"
-
-[[ $file ]] && file="${file[2]}"
-
-local \
-    fdn="${fdn[2]:-2}" \
-    arrow="${arrow[2]:-"  -->"}" \
-    arrow_bold="${arrow_bold}" \
-    arrow_color="${arrow_color[2]:-"magenta"}" \
-    decor="${decor[2]:-" "}" \
+typeset -l \
+    arrow="${opts[arrow]:-"  -->"}" \
+    arrow_bold="${opts[arrow-bold]:-}" \
+    arrow_color="${opts[arrow-color]:-"magenta"}" \
+    no_arrow="${opts[no-arrow]:-}" \
+    decor="${opts[decor]:-" "}" \
     decor_bold='%B' \
-    decor_color="${decor_color[2]:-" "}" \
-    label="${label[2]:-""}" \
-    label_bold="${label_bold}" \
-    label_color="${label_color[2]:-"white"}" \
-    label_justify=${label_justify[2]:-'(r:10:: :)'} \
+    decor_color="${opts[decor-color]:-" "}" \
+    label="${opts[label]:-""}" \
+    label_bold="${opts[label-bold]:-}" \
+    label_color="${opts[label-color]:-"white"}" \
+    label_justify=${opts[label-justify]:-'(r:10:: :)'} \
     _label='\${${label_justify}label}' \
-    interlog="${interlog[2]:-""}" \
+    interlog="${opts[interlog]:-""}" \
     interlog_color='' \
     message="$@" \
-    message_bold=${message_bold} \
-    message_color="${message_color[2]:-"white"}" \
-    auto_color=${auto_color[2]:-"auto"} \
-    use_color=0 \
-    icon=$icon \
+    message_bold="${opts[message_bold]:-}" \
+    message_color="${opts[message-color]:-"white"}" \
+    auto_color=${opts[auto-color]:-"auto"} \
+    icon="${opts[icon]:-}" \
     to_print=() \
-    file=$file file_only=0 nl_seperator=' > '
+    file="${opts[file]:-}" \
+    nl_seperator=' > '
+
+typeset -i -l \
+    fdn="${opts[u]:-${opts[fd]:-2}}" \
+    use_color=0 \
+    file_only=0 \
+    number_lines=${opts[nl]:-${opts[number-lines]:-0}} \
 
 # convert paths to numeric fds
 [[ "$fdn" == /dev/stdout ]] && fdn=1
@@ -110,7 +112,7 @@ if [[ "$file" ]] {
   message="$message\n${file_lines%%[[:blank:]]##}"
 }
 
-if [[ $number_lines ]] {
+if (( number_lines )) {
   message=( "${(f)message}" )
   local numbered_lines="$(echo ${message[2,-1]} | nl -v$((file_only?1:2)) -ba -w4 -s$nl_seperator)"
   message="${message[1]}\n$numbered_lines"
